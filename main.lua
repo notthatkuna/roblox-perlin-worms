@@ -1,22 +1,26 @@
+local function ScaleModel(model, scale)
+	-- Taken from https://devforum.roblox.com/t/is-this-the-best-way-to-scale-a-model/166021
+
+	local primary = model.PrimaryPart
+	local primaryCf = primary.CFrame
+
+	for _,v in pairs(model:GetDescendants()) do
+		if (v:IsA("BasePart")) then
+			v.Size = (v.Size * scale)
+			if (v ~= primary) then
+				v.CFrame = (primaryCf + (primaryCf:inverse() * v.Position * scale))
+			end
+		end
+	end
+
+	return model
+
+end
 spawn(function()
-	while wait(5) do
+	while wait(10) do
 		for _,v in pairs(workspace:GetDescendants()) do
 			if v.Name == "DELETE" then v:Destroy() end
 		end
-		print("PURGED PARTS")
-		print("PURGED PARTS")
-		print("PURGED PARTS")
-		print("PURGED PARTS")
-		print("PURGED PARTS")
-		print("PURGED PARTS")
-		print("PURGED PARTS")
-		print("PURGED PARTS")
-		print("PURGED PARTS")
-		print("PURGED PARTS")
-		print("PURGED PARTS")
-		print("PURGED PARTS")
-		print("PURGED PARTS")
-		print("PURGED PARTS")
 	end
 end)
 
@@ -33,6 +37,7 @@ local function setTwoEndPoints(part, point1, point2)
     return part
 end
 
+local SIZEOF_BALL2
 local R = 0
 local switch = 1
 
@@ -41,21 +46,29 @@ local Seed = math.random(1,1616) -- Changes cave generation a lot
 
 
 print("Seed is: "..Seed)
-local Resolution = math.random(5,100) -- How far away each part will be from eachother, keep it low because higher numbers might break everything and it will look very messy
+local Resolution = math.random(1,50) -- How far away each part will be from eachother, keep it low because higher numbers might break everything and it will look very messy
 local NumWorm = 1
 local lastPart = nil
-while wait(1) do
+local br = false
+while true do
+	wait(2)
     local SIZEOF_BALL = math.random(10,20)
     local IS_WATER_WORM = false
 	NumWorm = NumWorm+1
-	local sX = math.noise(NumWorm/Resolution+.1,Seed)
-	local sY = math.noise(NumWorm/Resolution+sX+.1,Seed)
-	local sZ = math.noise(NumWorm/Resolution+sY+.1,Seed)
+	local sX = math.noise(NumWorm/Resolution+math.random(1,9),Seed)
+	local sY = math.noise(NumWorm/Resolution+sX+math.random(1,9),Seed)
+	local sZ = math.noise(NumWorm/Resolution+sY+math.random(1,9),Seed)
+	print(sX*500,sY*500,sZ*500)
 	local WormCF = CFrame.new(sX*500,sY*500,sZ*500)
     print("Worm "..NumWorm.."'s BALLSIZE variable is "..tostring(SIZEOF_BALL))
 	local Dist = (math.noise(NumWorm/Resolution+WormCF.p.magnitude,Seed)+.5)*500
 	local L_COUNTER = 0
 	for i = 1,Dist do
+		
+		if br then
+			br = false
+			break
+		end
 		
         if R == 0 then
             switch = 1
@@ -131,22 +144,57 @@ while wait(1) do
 				spawn(function()
 					while not comp do
 						wait()
-						SIZEOF_BALL = math.random(7,25)
-						workspace.Terrain:FillBall(p2.Position,SIZEOF_BALL,Enum.Material.Air)
+						SIZEOF_BALL2 = math.random(7,25)
+						workspace.Terrain:FillBall(p2.Position,SIZEOF_BALL2,Enum.Material.Air)
 						
 					end
 				end)
 				spawn(function()
 					while not comp do
 						wait(Resolution/10)
+						print("Allocating lighting and extra effects for worm "..tostring(NumWorm))
 						local p2c = p2:Clone()
 						p2c.Name = "LIGHTPARTT"
 						p2c.Parent = workspace
-						p2c.Transparency = .8
+						p2c.Transparency = .9
 						p2c.Size = p2c.Size - Vector3.new(5,5,5)
 						local light = Instance.new("PointLight",p2c)
-						light.Brightness = .3
-						light.Range = 30
+						print("Instanciated light")
+						light.Brightness = Resolution/100
+						print("Set brightness to "..light.Brightness)
+						light.Range = 40
+						print("Set range to "..light.Range)
+						local r3 = Region3.new(Part.Position - Vector3.new(SIZEOF_BALL,SIZEOF_BALL,SIZEOF_BALL), Part.Position + Vector3.new(SIZEOF_BALL,SIZEOF_BALL,SIZEOF_BALL))
+						r3 = r3:ExpandToGrid(4)
+						local material2, occupancy2 = game.Workspace.Terrain:ReadVoxels(r3, 4)
+
+						local size2 = material.Size -- Same as occupancies.Size
+
+						local no_air2 = 0
+						for x = 1, size2.X, 1 do
+							for y = 1, size2.Y, 1 do
+								for z = 1, size2.Z, 1 do
+									if material2[x][y][z] ~= Enum.Material.Air then no_air2 = no_air2 + 1 end
+								end
+							end
+						end
+
+						if no_air2 >= 20 then
+							print("Over 20 non-air voxels for mineshaft block")
+							local ch
+							if Resolution <= 9 then ch = Resolution else ch = Resolution end
+							if math.random(0,100) <= ch then
+								print("chance of miensahft block fulfilled")
+								local unc = workspace.un:Clone()
+								print("Cloned mineshaft block")
+								unc.Parent = workspace
+								unc.CFrame = Connect.CFrame
+								unc.Size = Vector3.new(SIZEOF_BALL2+20,SIZEOF_BALL2+20,SIZEOF_BALL2+20)
+								print("Socketed mineshaft block")
+								print("Allocation complete for this step")
+							end
+						end
+						
 					end
 				end)
 			end
@@ -162,8 +210,9 @@ while wait(1) do
 		elseif L_COUNTER >= 3 then
 			lastPart = nil
 			L_COUNTER = 0
-			Dist = nil
-			break
+			sX,sY,sZ = 0,0,0
+			
+			br= true
 		end
 	end
 	lastPart = nil
