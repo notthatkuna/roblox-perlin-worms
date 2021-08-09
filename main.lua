@@ -1,4 +1,24 @@
-
+spawn(function()
+	while wait(5) do
+		for _,v in pairs(workspace:GetDescendants()) do
+			if v.Name == "DELETE" then v:Destroy() end
+		end
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+		print("PURGED PARTS")
+	end
+end)
 
 local MASTERWAIT = .01 -- changes how much time to wait after each worm segment is created
 
@@ -34,9 +54,9 @@ while wait(1) do
 	local WormCF = CFrame.new(sX*500,sY*500,sZ*500)
     print("Worm "..NumWorm.."'s BALLSIZE variable is "..tostring(SIZEOF_BALL))
 	local Dist = (math.noise(NumWorm/Resolution+WormCF.p.magnitude,Seed)+.5)*500
-
+	local L_COUNTER = 0
 	for i = 1,Dist do
-		wait(.6)
+		
         if R == 0 then
             switch = 1
         elseif R == 255 then
@@ -54,63 +74,98 @@ while wait(1) do
 		Part.Anchored = true
 		Part.CFrame = CFrame.new(WormCF.p)
 		Part.Parent = workspace
-        local Connect = Part:Clone()
+		Part.Name = "DELETE"
+		local Connect = Part:Clone()
+		Connect.Name = "DELETE"
         Connect.Parent = workspace
         if lastPart then
             setTwoEndPoints(Connect,Part.Position,lastPart.Position)
             Part.Orientation = Connect.Orientation
         end
-        Connect.Color = Color3.fromRGB(R,0,0)
+		Connect.Color = Color3.fromRGB(R,0,0)
+		
         Part.Color = Color3.fromRGB(R,0,0)
         -- Connect.Transparency = 1
         -- Part.Transparency = 1
-        local light = Instance.new("PointLight",Part)
+		local light = Instance.new("PointLight",Part)
+		light.Name = "DELETE"
         light.Brightness = 1
 		light.Range = 30
-		if lastPart then
-			local p2 = Instance.new("Part", workspace)
-			p2.Anchored = true
-			p2.Size = Part.Size + Vector3.new(10,10,10)
-			p2.Position = lastPart.Position
-
-			local ts = game:GetService("TweenService")
-			local tween = ts:Create(p2, TweenInfo.new(1), {CFrame = Part.CFrame})
-			tween:Play()
-			local comp = false
-			tween.Completed:Connect(function()
-				comp = true
-			end)
-			spawn(function()
-				while not comp do
-					wait()
-					SIZEOF_BALL = math.random(7,25)
-					workspace.Terrain:FillBall(p2.Position,SIZEOF_BALL,Enum.Material.Air)
-					
-				end
-			end)
-			spawn(function()
-				while not comp do
-					wait(Resolution/10)
-					local p2c = p2:Clone()
-					p2c.Parent = workspace
-					p2c.Transparency = .95
-					p2c.Size = p2c.Size - Vector3.new(5,5,5)
-					local light = Instance.new("PointLight",p2c)
-					light.Brightness = .3
-					light.Range = 30
-				end
-			end)
-		end
-        
-
-
-        if (Connect.Orientation.Z > -20 and Connect.Orientation.Z < 20) and Part.Position.Y < workspace.TOP.Position.Y and Part.Position.Y > workspace.BOTTOM.Position.Y and IS_WATER_WORM then
-            workspace.Terrain:FillBall(Part.Position,SIZEOF_BALL,Enum.Material.Water)
-        else
-            workspace.Terrain:FillBall(Part.Position,SIZEOF_BALL,Enum.Material.Air)
-		end
-		lastPart = Part
 		
+		-- Check if there is still terrain surrounding the part
+		local r3 = Region3.new(Part.Position - Vector3.new(SIZEOF_BALL,SIZEOF_BALL,SIZEOF_BALL), Part.Position + Vector3.new(SIZEOF_BALL,SIZEOF_BALL,SIZEOF_BALL))
+		r3 = r3:ExpandToGrid(4)
+		local material, occupancy = game.Workspace.Terrain:ReadVoxels(r3, 4)
+
+		local size = material.Size -- Same as occupancies.Size
+		
+		local no_air = 0
+		for x = 1, size.X, 1 do
+			for y = 1, size.Y, 1 do
+				for z = 1, size.Z, 1 do
+					if material[x][y][z] ~= Enum.Material.Air then no_air = no_air + 1 end
+				end
+			end
+		end
+		
+		if no_air == 0 then
+			L_COUNTER = L_COUNTER + 1
+			
+		end
+		if L_COUNTER <= 2 then
+			wait(.1)
+			if lastPart then
+				local p2 = Instance.new("Part", workspace)
+				p2.Name = "DELETE"
+				p2.Anchored = true
+				p2.Size = Part.Size + Vector3.new(10,10,10)
+				p2.Position = lastPart.Position
+
+				local ts = game:GetService("TweenService")
+				local tween = ts:Create(p2, TweenInfo.new(1), {CFrame = Part.CFrame})
+				tween:Play()
+				local comp = false
+				tween.Completed:Connect(function()
+					comp = true
+				end)
+				spawn(function()
+					while not comp do
+						wait()
+						SIZEOF_BALL = math.random(7,25)
+						workspace.Terrain:FillBall(p2.Position,SIZEOF_BALL,Enum.Material.Air)
+						
+					end
+				end)
+				spawn(function()
+					while not comp do
+						wait(Resolution/10)
+						local p2c = p2:Clone()
+						p2c.Name = "LIGHTPARTT"
+						p2c.Parent = workspace
+						p2c.Transparency = .8
+						p2c.Size = p2c.Size - Vector3.new(5,5,5)
+						local light = Instance.new("PointLight",p2c)
+						light.Brightness = .3
+						light.Range = 30
+					end
+				end)
+			end
+	        
+
+
+	        if (Connect.Orientation.Z > -20 and Connect.Orientation.Z < 20) and Part.Position.Y < workspace.TOP.Position.Y and Part.Position.Y > workspace.BOTTOM.Position.Y and IS_WATER_WORM then
+	            workspace.Terrain:FillBall(Part.Position,SIZEOF_BALL,Enum.Material.Water)
+	        else
+	            workspace.Terrain:FillBall(Part.Position,SIZEOF_BALL,Enum.Material.Air)
+			end
+			lastPart = Part
+		elseif L_COUNTER >= 3 then
+			lastPart = nil
+			L_COUNTER = 0
+			Dist = nil
+			break
+		end
 	end
-    lastPart = nil
+	lastPart = nil
+	L_COUNTER = 0
 end
